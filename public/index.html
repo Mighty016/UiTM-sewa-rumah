@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>RUMAH SEWA</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1"><meta charset="utf-8" />
+  </head>
+  <body>
+
+    <!-- Add buttons to initiate auth sequence and sign out
+    <button id="authorize_button" style="display: none;">Authorize</button>
+    <button id="signout_button" style="display: none;">Sign Out</button> -->
+
+    <pre id="content" style="white-space: pre-wrap;"></pre>
+    <style>
+        :root{background-color: rgb(216, 207, 207);padding: 0;margin: 0;box-sizing: border-box;}
+        .mapouter{position:relative;text-align:left;}
+        .gmap_canvas {overflow:hidden;background:none!important;}
+        #address-list {display: block;height: 500px;overflow-y:scroll;background-color: rgb(167, 164, 164);}
+        .addresses{padding: 0.5em;}
+        .addresses:hover{background-color: rgb(143, 142, 142);color: white;}
+        .details_list{padding: 0.5em;}
+        .details_domain{margin: 0;align-content: center;}
+        ::-webkit-scrollbar {width: 5px;}
+        
+    </style>
+    
+
+    <table>
+        <tbody>
+            <tr>
+                <td colspan="2">
+                    <div class="mapouter">
+                        <div class="gmap_canvas">
+                            <iframe width="100%" height="500" id="gmap_canvas" src="https://maps.google.com/maps?q=UiTM%20shah%20alam&t=&z=13&ie=UTF8&iwloc=&output=embed" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr >
+                <td id="address-list"></td>
+                <td id="detail-domain" width="60%">
+                    <h1>DETAILS</h1>
+                    <table id="details"></table>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div>
+        data source: <a href="https://docs.google.com/spreadsheets/d/1dA9G4CxAJh3EbvWf2wOk_mbNawy_wLQ7wrGosLGxubo/edit">BORANG TAWARAN RUMAH SEWA NON RESIDENT UiTM SHAH ALAM (Responses)</a>
+    </div>
+
+    <script type="text/javascript">
+      // Client ID and API key from the Developer Console
+      var CLIENT_ID = '291116678341-b22ihubl1stg083f66bsd02cj3bqtska.apps.googleusercontent.com';
+      var API_KEY = 'AIzaSyDxxJaOlNx2EHFheTV6JT3lDe3ggX373uI';
+
+      // Array of API discovery doc URLs for APIs used by the quickstart
+      var DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
+
+      // Authorization scopes required by the API; multiple scopes can be
+      // included, separated by spaces.
+      var SCOPES = "https://www.googleapis.com/auth/spreadsheets.readonly";
+
+      // var authorizeButton = document.getElementById('authorize_button');
+      // var signoutButton = document.getElementById('signout_button');
+
+      /**
+       *  On load, called to load the auth2 library and API client library.
+       */
+      function handleClientLoad() {
+        gapi.load('client:auth2', initClient);
+      }
+
+      /**
+       *  Initializes the API client library and sets up sign-in state
+       *  listeners.
+       */
+      function initClient() {
+        gapi.client.init({
+          apiKey: API_KEY,
+          clientId: CLIENT_ID,
+          discoveryDocs: DISCOVERY_DOCS,
+          scope: SCOPES
+        }).then(function () {
+          getData();
+          // // Listen for sign-in state changes.
+          // gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+
+          // // Handle the initial sign-in state.
+          // updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+          // authorizeButton.onclick = handleAuthClick;
+          // signoutButton.onclick = handleSignoutClick;
+        }, function(error) {
+          appendPre(JSON.stringify(error, null, 2));
+        });
+      }
+
+      /**
+       *  Called when the signed in status changes, to update the UI
+       *  appropriately. After a sign-in, the API is called.
+       */
+      // function updateSigninStatus(isSignedIn) {
+      //   if (isSignedIn) {
+      //     authorizeButton.style.display = 'none';
+      //     signoutButton.style.display = 'block';
+      //     getData();
+      //   } else {
+      //     authorizeButton.style.display = 'block';
+      //     signoutButton.style.display = 'none';
+      //   }
+      // }
+
+      /**
+       *  Sign in the user upon button click.
+       */
+      // function handleAuthClick(event) {
+      //   gapi.auth2.getAuthInstance().signIn();
+      // }
+
+      // /**
+      //  *  Sign out the user upon button click.
+      //  */
+      // function handleSignoutClick(event) {
+      //   gapi.auth2.getAuthInstance().signOut();
+      // }
+
+      /**
+       * Append a pre element to the body containing the given message
+       * as its text node. Used to display the results of the API call.
+       *
+       * @param {string} message Text to be placed in pre element.
+       */
+      function appendPre(message) {
+        var pre = document.getElementById('content');
+        var textContent = document.createTextNode(message + '\n');
+        pre.appendChild(textContent);
+      }
+
+      /**
+       * Print the names and majors of students in a sample spreadsheet:
+       * https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
+       */
+    //   function listMajors() {
+    //     gapi.client.sheets.spreadsheets.values.get({
+    //       spreadsheetId: '1dA9G4CxAJh3EbvWf2wOk_mbNawy_wLQ7wrGosLGxubo',
+    //       range: 'BORANG TAWARAN RUMAH SEWA',
+    //     }).then(function(response) {
+    //       var range = response.result;
+    //       console.log(range);
+    //     }, function(response) {
+    //       appendPre('Error: ' + response.result.error.message);
+    //     });
+    //   }
+    let column_name = []; 
+    function getData() {
+        gapi.client.sheets.spreadsheets.values.get({
+            spreadsheetId: '1dA9G4CxAJh3EbvWf2wOk_mbNawy_wLQ7wrGosLGxubo',
+            range: 'BORANG TAWARAN RUMAH SEWA',
+        }).then(function(response) {
+            var range = response.result;
+            let result = range.values;
+
+            column_name = result.shift();
+            // console.log(result);
+
+            loadAddressList(result);
+
+        }, function(response) {
+            appendPre('Error: ' + response.result.error.message);
+        });
+    }
+
+    function loadAddressList(data){
+        let address_list_table = document.getElementById("address-list");
+        
+        data.forEach(function(value,index,array){
+           let row = document.createElement("tr");
+           let data = document.createElement("td");
+           data.innerHTML = value[3];
+           data.value = value;
+           data.onclick = loadDetail;
+           data.className = "addresses";
+          //  console.log(data.index);
+           row.append(data);
+           
+           address_list_table.append(row);
+        })
+    }
+
+    function loadDetail (){
+        let data = this.value;
+        // console.log(this.value);
+        let details_table = document.getElementById("details");
+        details_table.innerHTML = "";
+        column_name.forEach((element,index) => {
+            let row = document.createElement("tr");
+            
+            let desc = document.createElement("td");
+            desc.innerHTML = element;
+            desc.className = "details_list"
+
+            let desc_detail = document.createElement("td");
+            desc_detail.className = "details_list";
+            if(index === 2){
+              let whatsapp_link = document.createElement("a");
+              whatsapp_link.href = "https://wa.me/6" + data[index];
+              whatsapp_link.innerHTML = data[index];
+              desc_detail.append(whatsapp_link);
+            }else{
+              desc_detail.innerHTML = data[index];
+            }
+            
+            
+
+            row.append(desc);
+            row.append(desc_detail);
+
+            details_table.append(row);
+        });
+        updateMap(data[3]);
+    }
+
+    function updateMap(address){
+        let URIEncodedAddress = encodeURI(address);
+        console.log(URIEncodedAddress);
+        let gmap_canvas = document.getElementById("gmap_canvas");
+        let src = `https://maps.google.com/maps?q=${URIEncodedAddress}&t=&z=13&ie=UTF8&iwloc=&output=embed`;
+        gmap_canvas.src = src;
+    }
+
+    </script>
+
+    <script async defer src="https://apis.google.com/js/api.js"
+        onload="this.onload=function(){};handleClientLoad()"
+        onreadystatechange="if (this.readyState === 'complete') this.onload()">
+    </script>
+  </body>
+</html>
+
